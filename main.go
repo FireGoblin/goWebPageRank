@@ -1,14 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
+	"os"
 	"runtime"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -29,18 +29,15 @@ func main() {
 	fmt.Println(*filename)
 
 	start := time.Now()
-	byteArray, err := ioutil.ReadFile(*filename)
-	finish := time.Since(start)
-	fmt.Println("raw read time:", finish)
+
+	file, err := os.Open(*filename)
 	check(err)
 
-	start = time.Now()
+	scanner := bufio.NewScanner(bufio.NewReader(file))
+	scanner.Split(bufio.ScanWords)
 
-	s := string(byteArray[:])
-
-	lines := strings.Split(s, "\r\n")
-
-	nodeCount, err := strconv.Atoi(lines[0])
+	scanner.Scan()
+	nodeCount, err := strconv.Atoi(scanner.Text())
 	check(err)
 
 	//matrix := AdjacencyMatrix(make([]*AdjacencyEntries, nodeCount))
@@ -52,17 +49,13 @@ func main() {
 
 	nextIndex := 0
 
-	for _, line := range lines[1:] {
-		twoNums := strings.Fields(line)
-
-		if len(twoNums) != 2 {
-			fmt.Println(line)
-			panic(fmt.Sprintln("bad line is not 2 nums:", len(twoNums)))
-		}
-
-		outIndex, err := strconv.Atoi(twoNums[0])
+	for scanner.Scan() {
+		outIndex, err := strconv.Atoi(scanner.Text())
 		check(err)
-		inIndex, err := strconv.Atoi(twoNums[1])
+		if !scanner.Scan() {
+			panic("unexpected failed scan")
+		}
+		inIndex, err := strconv.Atoi(scanner.Text())
 		check(err)
 
 		out, ok := indexMap[outIndex]
@@ -86,7 +79,13 @@ func main() {
 		matrix.addEdge(out, in)
 	}
 
-	finish = time.Since(start)
+	if scanner.Err() != nil {
+		panic("reading input exited with non-EOF error")
+	}
+
+	file.Close()
+
+	finish := time.Since(start)
 	//reading file done
 	fmt.Println("time to read file:", finish)
 
