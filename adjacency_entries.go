@@ -12,7 +12,3 @@ func (a *AdjacencyEntries) addInEdge(outIndex int) {
 func (a *AdjacencyEntries) addOutEdge() {
 	a.outEdgeCount++
 }
-
-// func (a *AdjacencyEntries) generateNewRank(rankOld []float64) {
-
-// }

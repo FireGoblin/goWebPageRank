@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -29,7 +30,11 @@ func main() {
 
 	start := time.Now()
 	byteArray, err := ioutil.ReadFile(*filename)
+	finish := time.Since(start)
+	fmt.Println("raw read time:", finish)
 	check(err)
+
+	start = time.Now()
 
 	s := string(byteArray[:])
 
@@ -43,7 +48,7 @@ func main() {
 	matrix.initWithSize(nodeCount)
 
 	indexMap := make(map[int]int)
-	backIndexMap := make(map[int]int)
+	//backIndexMap := make(map[int]int)
 
 	nextIndex := 0
 
@@ -64,7 +69,7 @@ func main() {
 		if !ok {
 			out = nextIndex
 			indexMap[outIndex] = nextIndex
-			backIndexMap[nextIndex] = outIndex
+			//backIndexMap[nextIndex] = outIndex
 			nextIndex++
 		}
 
@@ -72,14 +77,14 @@ func main() {
 		if !ok {
 			in = nextIndex
 			indexMap[inIndex] = nextIndex
-			backIndexMap[nextIndex] = inIndex
+			//backIndexMap[nextIndex] = inIndex
 			nextIndex++
 		}
 
 		matrix.addEdge(out, in)
 	}
 
-	finish := time.Since(start)
+	finish = time.Since(start)
 	//reading file done
 	fmt.Println("time to read file:", finish)
 
@@ -92,12 +97,14 @@ func main() {
 	rankNew := make([]float64, nodeCount)
 	done := false
 
+	concurrencyFactor := runtime.GOMAXPROCS(0) * 16
+
 	for i, _ := range rank {
 		rank[i] = 1.0 / float64(nodeCount)
 	}
 
 	for !done {
-		matrix.generateNewRank(rank, rankNew, beta)
+		matrix.generateNewRank(rank, rankNew, beta, concurrencyFactor)
 
 		sum := 0.0
 
@@ -118,6 +125,10 @@ func main() {
 				break
 			}
 		}
+
+		// fmt.Println(rank)
+		// fmt.Println(rankNew)
+		// break
 
 		copy(rank, rankNew)
 		iteration++

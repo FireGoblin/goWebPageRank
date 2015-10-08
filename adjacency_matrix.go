@@ -1,5 +1,7 @@
 package main
 
+//import "runtime"
+
 //import "fmt"
 
 type AdjacencyMatrix struct {
@@ -14,16 +16,7 @@ func (a *AdjacencyMatrix) initWithSize(size int) {
 }
 
 func (a *AdjacencyMatrix) addEdge(out int, in int) {
-	// _, ok := a.rows[out]
-	// if !ok {
-	// 	a.rows[out] = &AdjacencyEntries{make([]int, 10), 0}
-	// }
 	a.rows[out].addOutEdge()
-
-	// _, ok = a.rows[in]
-	// if !ok {
-	// 	a.rows[in] = &AdjacencyEntries{make([]int, 10), 0}
-	// }
 	a.rows[in].addInEdge(out)
 }
 
@@ -31,13 +24,41 @@ func (a *AdjacencyMatrix) size() int {
 	return len(a.rows)
 }
 
-func (a *AdjacencyMatrix) generateNewRank(rank []float64, rankNew []float64, beta float64) {
-	for i, entry := range a.rows {
-		r := 0.0
-		for _, inEdge := range entry.inEdges {
-			r += beta * rank[inEdge] / float64(a.rows[inEdge].outEdgeCount)
-			//fmt.Println("r:", r)
-		}
-		rankNew[i] = r
+//x is the concurrency factor
+//note: will error if number of nodes is too small relative to x
+func (a *AdjacencyMatrix) generateNewRank(rank []float64, rankNew []float64, beta float64, x int) {
+	dones := make([]chan bool, x)
+	for i, _ := range dones {
+		dones[i] = make(chan bool)
 	}
+
+	sectionSize := (a.size() + x - 1) / x
+
+	//fmt.Println(sectionSize)
+
+	for i := 0; i < x; i++ {
+		go func(i int) {
+			top := sectionSize * (i + 1)
+			if i == x-1 {
+				top = a.size()
+			}
+			//fmt.Println(i)
+			//fmt.Println(sectionSize*i, top)
+			for index, entry := range a.rows[sectionSize*i : top] {
+				r := 0.0
+				for _, inEdge := range entry.inEdges {
+					r += beta * rank[inEdge] / float64(a.rows[inEdge].outEdgeCount)
+				}
+				rankNew[index+sectionSize*i] = r
+			}
+			dones[i] <- true
+			close(dones[i])
+		}(i)
+	}
+
+	//fmt.Println("entering")
+	for i := 0; i < x; i++ {
+		<-dones[i]
+	}
+	//fmt.Println("exiting")
 }
