@@ -33,16 +33,17 @@ func (a *AdjacencyMatrix) generateNewRank(rank []float64, rankNew []float64, bet
 
 	for i := 0; i < x; i++ {
 		go func(i int) {
+			bottom := sectionSize * i
 			top := sectionSize * (i + 1)
 			if i == x-1 {
 				top = a.size()
 			}
-			for index, entry := range a.rows[sectionSize*i : top] {
+			for index, entry := range a.rows[bottom:top] {
 				r := 0.0
 				for _, inEdge := range entry.inEdges {
 					r += beta * rank[inEdge] / float64(a.rows[inEdge].outEdgeCount)
 				}
-				rankNew[index+sectionSize*i] = r
+				rankNew[index+bottom] = r
 			}
 			dones <- true
 		}(i)

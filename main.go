@@ -120,10 +120,6 @@ func main() {
 			rankNew[i] += jumpFactor
 		}
 
-		// dones := make([]chan bool, concurrencyFactor)
-		// for i, _ := range dones {
-		// 	dones[i] = make(chan bool)
-		// }
 		dones := make(chan bool)
 
 		fail := make(chan bool)
@@ -132,12 +128,13 @@ func main() {
 
 		for i := 0; i < concurrencyFactor; i++ {
 			go func(i int) {
+				bottom := sectionSize * i
 				top := sectionSize * (i + 1)
 				if i == concurrencyFactor-1 {
 					top = nodeCount
 				}
-				for i, _ := range rankNew[sectionSize*i : top] {
-					if math.Abs(rankNew[i]-rank[i]) > epsilon {
+				for index, _ := range rankNew[bottom:top] {
+					if math.Abs(rankNew[index+bottom]-rank[index+bottom]) > epsilon {
 						dones <- false
 						fail <- true
 						return
@@ -159,10 +156,6 @@ func main() {
 				break
 			}
 		}
-
-		// fmt.Println(rank)
-		// fmt.Println(rankNew)
-		// break
 
 		copy(rank, rankNew)
 		iteration++
