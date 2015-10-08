@@ -27,14 +27,9 @@ func (a *AdjacencyMatrix) size() int {
 //x is the concurrency factor
 //note: will error if number of nodes is too small relative to x
 func (a *AdjacencyMatrix) generateNewRank(rank []float64, rankNew []float64, beta float64, x int) {
-	dones := make([]chan bool, x)
-	for i, _ := range dones {
-		dones[i] = make(chan bool)
-	}
+	dones := make(chan bool)
 
 	sectionSize := (a.size() + x - 1) / x
-
-	//fmt.Println(sectionSize)
 
 	for i := 0; i < x; i++ {
 		go func(i int) {
@@ -42,8 +37,6 @@ func (a *AdjacencyMatrix) generateNewRank(rank []float64, rankNew []float64, bet
 			if i == x-1 {
 				top = a.size()
 			}
-			//fmt.Println(i)
-			//fmt.Println(sectionSize*i, top)
 			for index, entry := range a.rows[sectionSize*i : top] {
 				r := 0.0
 				for _, inEdge := range entry.inEdges {
@@ -51,14 +44,11 @@ func (a *AdjacencyMatrix) generateNewRank(rank []float64, rankNew []float64, bet
 				}
 				rankNew[index+sectionSize*i] = r
 			}
-			dones[i] <- true
-			close(dones[i])
+			dones <- true
 		}(i)
 	}
 
-	//fmt.Println("entering")
 	for i := 0; i < x; i++ {
-		<-dones[i]
+		<-dones
 	}
-	//fmt.Println("exiting")
 }

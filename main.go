@@ -18,7 +18,7 @@ func check(err error) {
 	}
 }
 
-var filename = flag.String("file", "web-Google.txt", "file to parse on")
+var filename = flag.String("file", "/Users/AnimotoOverstreet/go/bin/web-Google.txt", "file to parse on")
 
 // file format rules:
 // first line is an integer for the number of nodes
@@ -97,7 +97,9 @@ func main() {
 	rankNew := make([]float64, nodeCount)
 	done := false
 
-	concurrencyFactor := runtime.GOMAXPROCS(0) * 16
+	concurrencyFactor := runtime.GOMAXPROCS(0) * 64
+
+	sectionSize := (nodeCount + concurrencyFactor - 1) / concurrencyFactor
 
 	for i, _ := range rank {
 		rank[i] = 1.0 / float64(nodeCount)
@@ -118,9 +120,41 @@ func main() {
 			rankNew[i] += jumpFactor
 		}
 
+		// dones := make([]chan bool, concurrencyFactor)
+		// for i, _ := range dones {
+		// 	dones[i] = make(chan bool)
+		// }
+		dones := make(chan bool)
+
+		fail := make(chan bool)
+
 		done = true
-		for i, _ := range rankNew {
-			if math.Abs(rankNew[i]-rank[i]) > epsilon {
+
+		for i := 0; i < concurrencyFactor; i++ {
+			go func(i int) {
+				top := sectionSize * (i + 1)
+				if i == concurrencyFactor-1 {
+					top = nodeCount
+				}
+				for i, _ := range rankNew[sectionSize*i : top] {
+					if math.Abs(rankNew[i]-rank[i]) > epsilon {
+						dones <- false
+						fail <- true
+						return
+					}
+					select {
+					case <-fail:
+						return
+					default:
+					}
+				}
+				dones <- true
+			}(i)
+		}
+
+		for i := 0; i < concurrencyFactor; i++ {
+			ok := <-dones
+			if !ok {
 				done = false
 				break
 			}
