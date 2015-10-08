@@ -40,11 +40,11 @@ func main() {
 
 	lines := strings.Split(s, "\r\n")
 
-	var matrix AdjacencyMatrix
-
 	nodeCount, err := strconv.Atoi(lines[0])
 	check(err)
 
+	//matrix := AdjacencyMatrix(make([]*AdjacencyEntries, nodeCount))
+	var matrix AdjacencyMatrix
 	matrix.initWithSize(nodeCount)
 
 	indexMap := make(map[int]int)
@@ -80,6 +80,8 @@ func main() {
 			//backIndexMap[nextIndex] = inIndex
 			nextIndex++
 		}
+
+		//fmt.Println(matrix.size())
 
 		matrix.addEdge(out, in)
 	}
