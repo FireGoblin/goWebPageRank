@@ -117,7 +117,7 @@ func main() {
 	rankNew := make([]float64, nodeCount)
 	done := false
 
-	concurrencyFactor := runtime.GOMAXPROCS(0) / 8 // * 64
+	concurrencyFactor := runtime.GOMAXPROCS(0) * 64
 
 	sectionSize := (nodeCount + concurrencyFactor - 1) / concurrencyFactor
 
