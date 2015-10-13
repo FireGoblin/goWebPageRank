@@ -20,6 +20,62 @@ func check(err error) {
 
 var filename = flag.String("file", "/Users/AnimotoOverstreet/go/bin/web-Google.txt", "file to parse on")
 
+func scanInput(scanner *bufio.Scanner, nodeCount int) (adjacencyMatrix, map[int]int) {
+	var matrix adjacencyMatrix
+	matrix.initWithSize(nodeCount)
+
+	indexMap := make(map[int]int)
+	nextIndex := 0
+
+	for scanner.Scan() {
+		outIndex, err := strconv.Atoi(scanner.Text())
+		check(err)
+		if !scanner.Scan() {
+			panic("unexpected failed scan")
+		}
+		inIndex, err := strconv.Atoi(scanner.Text())
+		check(err)
+
+		out, ok := indexMap[outIndex]
+		if !ok {
+			out = nextIndex
+			indexMap[outIndex] = nextIndex
+			nextIndex++
+		}
+
+		in, ok := indexMap[inIndex]
+		if !ok {
+			in = nextIndex
+			indexMap[inIndex] = nextIndex
+			nextIndex++
+		}
+
+		matrix.addEdge(out, in)
+	}
+
+	return matrix, indexMap
+}
+
+func setVals(slice []float64, val float64) {
+	for i := range slice {
+		slice[i] = val
+	}
+}
+
+func sumVals(slice []float64) float64 {
+	sum := 0.0
+	for _, v := range slice {
+		sum += v
+	}
+	return sum
+}
+
+func addToVals(slice []float64, val float64) {
+	for i := range slice {
+		slice[i] += val
+	}
+}
+
 // file format rules:
 // first line is an integer for the number of nodes
 // all following lines are a pain of integers
@@ -40,43 +96,7 @@ func main() {
 	nodeCount, err := strconv.Atoi(scanner.Text())
 	check(err)
 
-	var matrix adjacencyMatrix
-	matrix.initWithSize(nodeCount)
-
-	indexMap := make(map[int]int)
-	//backIndexMap := make(map[int]int)
-
-	nextIndex := 0
-
-	for scanner.Scan() {
-		outIndex, err := strconv.Atoi(scanner.Text())
-		check(err)
-		if !scanner.Scan() {
-			panic("unexpected failed scan")
-		}
-		inIndex, err := strconv.Atoi(scanner.Text())
-		check(err)
-
-		out, ok := indexMap[outIndex]
-		if !ok {
-			out = nextIndex
-			indexMap[outIndex] = nextIndex
-			//backIndexMap[nextIndex] = outIndex
-			nextIndex++
-		}
-
-		in, ok := indexMap[inIndex]
-		if !ok {
-			in = nextIndex
-			indexMap[inIndex] = nextIndex
-			//backIndexMap[nextIndex] = inIndex
-			nextIndex++
-		}
-
-		//fmt.Println(matrix.size())
-
-		matrix.addEdge(out, in)
-	}
+	matrix, indexMap := scanInput(scanner, nodeCount)
 
 	if scanner.Err() != nil {
 		panic("reading input exited with non-EOF error")
@@ -101,24 +121,16 @@ func main() {
 
 	sectionSize := (nodeCount + concurrencyFactor - 1) / concurrencyFactor
 
-	for i := range rank {
-		rank[i] = 1.0 / float64(nodeCount)
-	}
+	setVals(rank, 1.0/float64(nodeCount))
 
 	for !done {
 		matrix.generateNewRank(rank, rankNew, beta, concurrencyFactor)
 
-		sum := 0.0
-
-		for _, v := range rankNew {
-			sum += v
-		}
+		sum := sumVals(rankNew)
 
 		jumpFactor := (1.0 - sum) / float64(nodeCount)
 
-		for i := range rankNew {
-			rankNew[i] += jumpFactor
-		}
+		addToVals(rankNew, jumpFactor)
 
 		dones := make(chan bool)
 

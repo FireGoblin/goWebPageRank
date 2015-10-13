@@ -4,7 +4,7 @@ type adjacencyMatrix []*adjacencyEntries
 
 func (a *adjacencyMatrix) initWithSize(size int) {
 	(*a) = adjacencyMatrix(make([]*adjacencyEntries, size))
-	for i, _ := range *a {
+	for i := range *a {
 		(*a)[i] = &adjacencyEntries{make([]int, 0, 10), 0}
 	}
 }
