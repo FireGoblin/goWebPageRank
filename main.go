@@ -40,8 +40,7 @@ func main() {
 	nodeCount, err := strconv.Atoi(scanner.Text())
 	check(err)
 
-	//matrix := AdjacencyMatrix(make([]*AdjacencyEntries, nodeCount))
-	var matrix AdjacencyMatrix
+	var matrix adjacencyMatrix
 	matrix.initWithSize(nodeCount)
 
 	indexMap := make(map[int]int)
@@ -98,11 +97,11 @@ func main() {
 	rankNew := make([]float64, nodeCount)
 	done := false
 
-	concurrencyFactor := runtime.GOMAXPROCS(0) * 64
+	concurrencyFactor := runtime.GOMAXPROCS(0) / 8 // * 64
 
 	sectionSize := (nodeCount + concurrencyFactor - 1) / concurrencyFactor
 
-	for i, _ := range rank {
+	for i := range rank {
 		rank[i] = 1.0 / float64(nodeCount)
 	}
 
@@ -117,7 +116,7 @@ func main() {
 
 		jumpFactor := (1.0 - sum) / float64(nodeCount)
 
-		for i, _ := range rankNew {
+		for i := range rankNew {
 			rankNew[i] += jumpFactor
 		}
 
@@ -134,7 +133,7 @@ func main() {
 				if i == concurrencyFactor-1 {
 					top = nodeCount
 				}
-				for index, _ := range rankNew[bottom:top] {
+				for index := range rankNew[bottom:top] {
 					if math.Abs(rankNew[index+bottom]-rank[index+bottom]) > epsilon {
 						dones <- false
 						fail <- true

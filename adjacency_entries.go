@@ -1,14 +1,14 @@
 package main
 
-type AdjacencyEntries struct {
+type adjacencyEntries struct {
 	inEdges      []int
 	outEdgeCount int
 }
 
-func (a *AdjacencyEntries) addInEdge(outIndex int) {
+func (a *adjacencyEntries) addInEdge(outIndex int) {
 	a.inEdges = append(a.inEdges, outIndex)
 }
 
-func (a *AdjacencyEntries) addOutEdge() {
+func (a *adjacencyEntries) addOutEdge() {
 	a.outEdgeCount++
 }

@@ -1,30 +1,26 @@
 package main
 
-//import "runtime"
+type adjacencyMatrix []*adjacencyEntries
 
-//import "fmt"
-
-type AdjacencyMatrix []*AdjacencyEntries
-
-func (a *AdjacencyMatrix) initWithSize(size int) {
-	(*a) = AdjacencyMatrix(make([]*AdjacencyEntries, size))
+func (a *adjacencyMatrix) initWithSize(size int) {
+	(*a) = adjacencyMatrix(make([]*adjacencyEntries, size))
 	for i, _ := range *a {
-		(*a)[i] = &AdjacencyEntries{make([]int, 0, 10), 0}
+		(*a)[i] = &adjacencyEntries{make([]int, 0, 10), 0}
 	}
 }
 
-func (a AdjacencyMatrix) addEdge(out int, in int) {
+func (a adjacencyMatrix) addEdge(out int, in int) {
 	a[out].addOutEdge()
 	a[in].addInEdge(out)
 }
 
-func (a AdjacencyMatrix) size() int {
+func (a adjacencyMatrix) size() int {
 	return len(a)
 }
 
 //x is the concurrency factor
 //note: will error if number of nodes is too small relative to x
-func (a AdjacencyMatrix) generateNewRank(rank []float64, rankNew []float64, beta float64, x int) {
+func (a adjacencyMatrix) generateNewRank(rank []float64, rankNew []float64, beta float64, x int) {
 	dones := make(chan bool)
 
 	sectionSize := (a.size() + x - 1) / x
